@@ -1,0 +1,39 @@
+apiVersion: sparkoperator.k8s.io/v1beta2
+kind: SparkApplication
+metadata:
+  name: spark-hello-app
+  namespace: {{ .Values.serviceAccount.namespace }}
+spec:
+  type: Java
+  mode: cluster
+  image: "{{ .Values.image.name }}:{{ .Values.image.tag }}"
+  imagePullPolicy: {{ .Values.image.pullPolicy }}
+  mainClass: {{ .Values.spark.mainClass }}
+  mainApplicationFile: '{{ .Values.spark.jarPath }}'
+  sparkVersion: "{{ .Values.spark.version }}"
+  restartPolicy:
+    type: {{ .Values.restartPolicy.type }}
+  sparkConf:
+    spark.kubernetes.container.image.pullPolicy: {{ .Values.image.pullPolicy }}
+    spark.kubernetes.executor.podNamePrefix: spark-hello-app-exec
+    spark.kubernetes.authenticate.driver.serviceAccountName: {{ .Values.serviceAccount.name }}
+    spark.kubernetes.api.timeout: "60000"
+    spark.kubernetes.executor.uploadLocalJars: "false"
+    spark.kubernetes.driver.uploadLocalJars: "false"
+    spark.hadoop.fs.file.impl: org.apache.hadoop.fs.LocalFileSystem
+  driver:
+    cores: {{ .Values.driver.cores }}
+    memory: "{{ .Values.driver.memory }}"
+    labels:
+      version: 1.0.0
+    serviceAccount: {{ .Values.serviceAccount.name }}
+    annotations:
+      sparkoperator.k8s.io/spark-ui-port: "4040"
+      sparkoperator.k8s.io/spark-ui-service-type: "NodePort"
+      sparkoperator.k8s.io/spark-ui-node-port: "30400"
+  executor:
+    cores: {{ .Values.executor.cores }}
+    instances: {{ .Values.executor.instances }}
+    memory: "{{ .Values.executor.memory  }}"
+    labels:
+      version: 1.0.0
