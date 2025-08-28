@@ -3,7 +3,7 @@ serviceAccount:
   namespace: default
 
 image:
-  name: mansuralam/spark-hello-app
+  name: spark-hello-app
   tag: latest
   pullPolicy: IfNotPresent
 
