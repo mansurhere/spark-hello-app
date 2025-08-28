@@ -11,6 +11,7 @@ spark:
   mainClass: com.spark.hello.app.SparkHelloAppApplication
   jarPath: local:///opt/spark/jars/spark-hello-app-2.7.0.jar
   version: "3.5.1"
+  role: test-role
 restartPolicy:
   type: Never
 
