@@ -3,8 +3,3 @@ name: spark-hello-chart
 description: A Helm chart for deploying a Spark application on Kubernetes
 version: 0.1.0
 appVersion: "3.5.1"
-dependencies:
-  - name: spark-operator
-    repository: "https://kubeflow.github.io/spark-operator"
-    version: 1.1.27
-    alias: spark-operator

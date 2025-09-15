@@ -1,26 +1,30 @@
 serviceAccount:
-  name: spark-job-sa
-  namespace: default
+  name: spark-hello-job-sa
+  namespace: spark-job-ns
 
 image:
-  name: spark-hello-app
-  tag: latest
+  name: spark-hello-job
+  tag: "1.0"
   pullPolicy: IfNotPresent
 
 spark:
-  mainClass: com.spark.hello.app.SparkHelloAppApplication
-  jarPath: local:///opt/spark/jars/spark-hello-app-2.7.0.jar
+  mainClass: com.spark.hello.job.SparkHelloJobApplication
+  jarPath: local:///opt/spark/jars/spark-hello-job-1.0.jar
   version: "3.5.1"
   role: test-role
 restartPolicy:
   type: Never
 
 driver:
-  cores: 2
-  memory: "2g"
+  cores: 1
+  memory: "1g"
   uiNodePort: 30400
 
 executor:
   cores: 1
   instances: 1
   memory: "1g"
+env:
+  app_name: spark-job-submit
+  app_version: 1.0.0
+  location: Kolkata

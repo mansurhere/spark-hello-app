@@ -1,39 +1,92 @@
-apiVersion: sparkoperator.k8s.io/v1beta2
-kind: SparkApplication
+apiVersion: batch/v1
+kind: Job
 metadata:
-  name: spark-hello-app
+  name: spark-hello-job-submit
   namespace: {{ .Values.serviceAccount.namespace }}
 spec:
-  type: Java
-  mode: cluster
-  image: "{{ .Values.image.name }}:{{ .Values.image.tag }}"
-  imagePullPolicy: {{ .Values.image.pullPolicy }}
-  mainClass: {{ .Values.spark.mainClass }}
-  mainApplicationFile: '{{ .Values.spark.jarPath }}'
-  sparkVersion: "{{ .Values.spark.version }}"
-  restartPolicy:
-    type: {{ .Values.restartPolicy.type }}
-  sparkConf:
-    spark.kubernetes.container.image.pullPolicy: {{ .Values.image.pullPolicy }}
-    spark.kubernetes.executor.podNamePrefix: spark-hello-app-exec
-    spark.kubernetes.authenticate.driver.serviceAccountName: {{ .Values.serviceAccount.name }}
-    spark.kubernetes.api.timeout: "60000"
-    spark.kubernetes.executor.uploadLocalJars: "false"
-    spark.kubernetes.driver.uploadLocalJars: "false"
-    spark.hadoop.fs.file.impl: org.apache.hadoop.fs.LocalFileSystem
-  driver:
-    cores: {{ .Values.driver.cores }}
-    memory: "{{ .Values.driver.memory }}"
-    labels:
-      version: 1.0.0
-    serviceAccount: {{ .Values.serviceAccount.name }}
-    annotations:
-      sparkoperator.k8s.io/spark-ui-port: "4040"
-      sparkoperator.k8s.io/spark-ui-service-type: "NodePort"
-      sparkoperator.k8s.io/spark-ui-node-port: "30400"
-  executor:
-    cores: {{ .Values.executor.cores }}
-    instances: {{ .Values.executor.instances }}
-    memory: "{{ .Values.executor.memory  }}"
-    labels:
-      version: 1.0.0
+  backoffLimit: 2
+  activeDeadlineSeconds: 300
+  template:
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      restartPolicy: Never
+      containers:
+        - name: spark-submit
+          image: "{{ .Values.image.name}}:{{ .Values.image.tag }}"
+          imagePullPolicy: IfNotPresent
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1
+            capabilities:
+              drop:
+                - ALL
+
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+
+          env:
+            - name: SPARK_HOME
+              value: /opt/spark
+            - name: HOME
+              value: /home/sparkuser
+            - name: HADOOP_USER_NAME
+              value: sparkuser
+            - name: APP_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: app-env-config
+                  key: APP_NAME
+            - name: APP_VERSION
+              valueFrom:
+                configMapKeyRef:
+                  name: app-env-config
+                  key: APP_VERSION
+            - name: LOCATION
+              valueFrom:
+                configMapKeyRef:
+                  name: app-env-config
+                  key: LOCATION
+
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              if [ ! -f "/opt/spark/jars/spark-hello-job-1.0.jar" ]; then
+                echo "JAR not found. Available jars:"
+                ls /opt/spark/jars/ | head -5
+                exit 1
+              fi
+
+              /opt/spark/bin/spark-submit \
+                --master k8s://https://kubernetes.default.svc \
+                --deploy-mode cluster \
+                --name spark-hello-app \
+                --class {{ .Values.spark.mainClass}} \
+                --conf spark.kubernetes.namespace={{ .Values.serviceAccount.namespace }} \
+                --conf spark.kubernetes.authenticate.driver.serviceAccountName={{ .Values.serviceAccount.name }} \
+                --conf spark.kubernetes.container.image={{ .Values.image.name}}:{{ .Values.image.tag }} \
+                --conf spark.kubernetes.container.image.pullPolicy=IfNotPresent \
+                --conf spark.executor.instances=1 \
+                --conf spark.executor.memory=512m \
+                --conf spark.executor.cores=1 \
+                --conf spark.driver.memory=512m \
+                --conf spark.driver.cores=1 \
+                --conf spark.sql.shuffle.partitions=1 \
+                --conf spark.sql.adaptive.enabled=true \
+                --conf spark.eventLog.enabled=false \
+                --conf spark.jars.ivy=/home/sparkuser/.ivy2 \
+                --conf spark.log4jHotPatch.enabled=false \
+                --conf spark.kubernetes.driverEnv.APP_NAME=$APP_NAME \
+                --conf spark.kubernetes.driverEnv.APP_VERSION=$APP_VERSION \
+                --conf spark.kubernetes.driverEnv.LOCATION=$LOCATION \
+                {{ .Values.spark.jarPath }}
+              #                --conf spark.kubernetes.driverEnv.APP_NAME={{ .Values.env.app_name }} \
+              #                --conf spark.kubernetes.driverEnv.APP_VERSION={{ .Values.env.app_version }} \
+              #                --conf spark.kubernetes.driverEnv.LOCATION={{ .Values.env.location }} \

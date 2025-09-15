@@ -1,13 +1,44 @@
+# -------------------------
+# Stage 1: Build the JAR
+# -------------------------
+FROM amazoncorretto:11-alpine-jdk AS builder
+
+USR root
+
+#buid-time arguments
+ARG REVISION
+ARG ATM_ID
+ARG PROJECT_NAME
+
+#install dependency
+RUN apk add --no-cache maven
+
+# Copy only necessary files first to leverage Docker cache
+COPY . /temp/app-build
+
+# Set working directory
+WORKDIR /temp/app-build
+
+# Build the JAR
+RUN mvn clean package -DskipTests
+
+# -------------------------
+# Stage 2: Final Spark Runtime
+# -------------------------
 FROM apache/spark:3.5.1
 
+# Switch to root to copy files
 USER root
 
-# Create necessary directories and copy JAR
+# Create necessary directories
 RUN mkdir -p /opt/spark/jars /opt/spark/work-dir
-COPY target/spark-hello-app-2.7.0.jar /opt/spark/jars/
 
-# Fix permissions for non-root user
+# Copy the JAR from the builder stage
+COPY --from=builder /temp/app-build/target/spark-hello-app-*.jar /opt/spark/jars/
+
+# Set correct permissions for non-root user
 RUN chown -R 185:185 /opt/spark && chmod -R 755 /opt/spark
 
+# Drop to non-root user and set working directory
 USER 185
 WORKDIR /opt/spark/work-dir

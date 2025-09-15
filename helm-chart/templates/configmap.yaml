@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-env-config
+  namespace: {{ .Values.serviceAccount.namespace }}  # Change if you're deploying to another namespace
+data:
+  APP_NAME: {{ .Values.env.app_name }}
+  APP_VERSION: {{ .Values.env.app_version }}
+  LOCATION: {{ .Values.env.location }}
+  #  db-url: {{ .Values.env.dbUrl }}
+  #  db-usr: {{ .Values.env.dbUser }}
+  #  db-pwd: {{ .Values.env.dbPassword }}
+  #  pg-db-url: {{ .Values.env.pgDbUrl }}
+  #  pg-db-usr: {{ .Values.env.pgDbUser }}
+  #  pg-db-pwd: {{ .Values.env.pgDbPassword }}

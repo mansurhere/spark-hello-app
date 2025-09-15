@@ -2,16 +2,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.spark.hello.app</groupId>
-	<artifactId>spark-hello-app</artifactId>
-	<version>2.7.0</version>
-	<name>spark-hello-app</name>
+	<groupId>com.spark.hello.job</groupId>
+	<artifactId>spark-hello-job</artifactId>
+	<version>1.0</version>
+	<name>spark-hello-job</name>
 	<properties>
 		<java.version>11</java.version>
 		<spark.version>3.4.0</spark.version>
 		<scala.version>2.12</scala.version>
 		<jakarta.version>4.0.3</jakarta.version>
-		<main.class>com.spark.hello.app.SparkHelloAppApplication</main.class>
+		<main.class>com.spark.hello.job.SparkHelloJobApplication</main.class>
 	</properties>
 	<dependencies>
 		<!-- Apache Spark core -->
@@ -43,7 +43,6 @@
 				<configuration>
 					<source>11</source>
 					<target>11</target>
-					<release>11</release>
 				</configuration>
 			</plugin>
 			<!-- Maven Shade Plugin for fat jar -->
